@@ -4,9 +4,9 @@
  *   Dynamically renders a child card based on the current URL hash,
  *   with resource error detection, configurable fallback routing, and an auto-return timer.
  *
- * @author        Your Name
- * @version       1.2.0
- * @license       MIT
+ * @author  Alvin Pergens
+ * @version 1.1.0
+ * @license MIT
  *
  * @example
  * # Minimal YAML configuration
@@ -26,19 +26,60 @@
  *   detail: 10000
  */
 
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "hash-timer-card",
+  name: "Hash Timer Card",
+  preview: true,
+  description: "Dynamic map rendering based on URL hash with timer.",
+});
+
 /**
  * @typedef {Object} HashTimerCardConfig
- * @property {Object.<string, Object>} cards               - Map of HA card configurations indexed by hash name.
- * @property {string}                  default             - Name of the card shown when the hash is absent or unrecognized.
- * @property {number}                  [loading_time=1000] - Duration in milliseconds to display the initial loading overlay.
- * @property {string}                  [loading_image]     - URL of the image shown during the initial load.
- * @property {string}                  [background_image]  - URL of the background image applied to the main container.
- * @property {string}                  [aspect_ratio]      - CSS aspect-ratio applied to the host element (e.g. "16/9").
- * @property {Object.<string, string>} [error_fallback]    - Map of card name → fallback card name on error.
- * @property {Object.<string, number>} [timers]            - Map of card name → duration (ms) before auto-returning to the default card.
+ * @property {Object.<string, Object>}   cards               - Map of HA card configurations indexed by hash name.
+ * @property {string}                    default             - Name of the card shown when the hash is absent or unrecognized.
+ * @property {number}                    [loading_time=1000] - Duration in milliseconds to display the initial loading overlay.
+ * @property {string}                    [loading_image]     - URL of the image shown during the initial load.
+ * @property {string}                    [background_image]  - URL of the background image applied to the main container.
+ * @property {string}                    [aspect_ratio]      - CSS aspect-ratio applied to the host element (e.g. "16/9").
+ * @property {Object.<string, string>}   [error_fallback]    - Map of card name → fallback card name on error.
+ * @property {Object.<string, number>}   [timers]            - Map of card name → duration (ms) before auto-returning to the default card.
+ * @property {Object.<string, string[]>} [trigger_entities]  - Map of card name → list of entity IDs; when any entity is active the card is shown automatically.
+ * @property {string[]}                  [trigger_priority]  - Ordered list of card names used to break ties when multiple trigger_entities are active simultaneously.
  */
 
 class HashTimerCard extends HTMLElement {
+  static async getConfigElement() {
+    // Dynamic import of the editor file allows us to keep the main card bundle small and avoid loading editor code in production.
+    await import("./hash-timer-card-editor.js");
+    return document.createElement("hash-timer-card-editor");
+  }
+
+  static getStubConfig() {
+    return {
+      default: "version",
+      loading_time: 1000,
+      cards: {
+        version: {
+          type: "markdown",
+          title: "Core Version",
+          content: "{{ states.update.home_assistant_core_update.attributes.installed_version }} ... Hit me!",
+          tap_action: {
+            action: "navigate",
+            navigation_path: "#bad-action"
+          }
+        },
+        "bad-action": {
+          type: "markdown",
+          title: "Wait wait wait!",
+          content: "This map is not meant to be clickable..."
+        }
+      },
+      timers: {
+        "bad-action": 3000
+      }
+    };
+  }
 
   // ---------------------------------------------------------------------------
   // Web Component lifecycle
@@ -53,7 +94,7 @@ class HashTimerCard extends HTMLElement {
    */
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
 
     /** @type {ReturnType<typeof setTimeout> | null} Reference to the active auto-return timer. */
     this._timer = null;
@@ -75,6 +116,9 @@ class HashTimerCard extends HTMLElement {
 
     /** @type {Function | null} Stored hash change listener reference for clean removal. */
     this._hashListener = null;
+
+    /** @type {string | null} Name of the card currently shown due to a trigger_entities match. */
+    this._triggeredCard = null;
 
     // Explicit binding ensures `this` is the component instance
     // when these methods are invoked as external event callbacks.
@@ -98,6 +142,7 @@ class HashTimerCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._childCard) this._childCard.hass = hass;
+    this._evaluateTriggers();
   }
 
   /**
@@ -109,7 +154,7 @@ class HashTimerCard extends HTMLElement {
    * @throws {Error} If the `cards` property is missing or is not an object.
    */
   setConfig(config) {
-    if (!config.cards || typeof config.cards !== 'object') {
+    if (!config.cards || typeof config.cards !== "object") {
       throw new Error("You must define a 'cards' object.");
     }
     this._config = { loading_time: 1000, ...config };
@@ -131,7 +176,7 @@ class HashTimerCard extends HTMLElement {
 
     // Use capture phase (3rd argument `true`) to intercept errors before
     // they can be consumed by a child handler.
-    this.shadowRoot.addEventListener("error", this._onErrorCaptured, true);
+    this.shadowRoot.addEventListener("error", this._onErrorCaptured, { capture: true, passive: true });
   }
 
   /**
@@ -144,7 +189,7 @@ class HashTimerCard extends HTMLElement {
   disconnectedCallback() {
     window.removeEventListener("location-changed", this._hashListener);
     window.removeEventListener("popstate", this._hashListener);
-    this.shadowRoot.removeEventListener("error", this._onErrorCaptured, true);
+    this.shadowRoot.removeEventListener("error", this._onErrorCaptured, { capture: true, passive: true });
     this._observer.disconnect();
     if (this._timer) clearTimeout(this._timer);
   }
@@ -166,10 +211,10 @@ class HashTimerCard extends HTMLElement {
     const ratio = this._config.aspect_ratio;
     this.shadowRoot.innerHTML = `
       <style>
-        :host { display: block; width: 100%; position: relative; border-radius: var(--ha-card-border-radius, 12px); overflow: hidden; ${ratio ? `aspect-ratio: ${ratio};` : ''} }
-        #container { width: 100%; ${bg ? `background: url('${bg}') center/cover no-repeat;` : ''} ${ratio ? 'height: 100%; position: absolute; top: 0; left: 0;' : 'height: auto;'} display: flex; flex-direction: column; }
+        :host { display: block; width: 100%; position: relative; border-radius: var(--ha-card-border-radius, 12px); overflow: hidden; ${ratio ? `aspect-ratio: ${ratio};` : ""} }
+        #container { width: 100%; ${bg ? `background: url('${bg}') center/cover no-repeat;` : ""} ${ratio ? "height: 100%; position: absolute; top: 0; left: 0;" : "height: auto;"} display: flex; flex-direction: column; }
         #container > * { flex: 1 1 auto; height: 100%; width: 100%; display: flex; flex-direction: column; }
-        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('${this._config.loading_image || ""}') center/cover no-repeat; z-index: 10; display: ${this._config.loading_image && this._initialLoad ? 'block' : 'none'}; pointer-events: none; }
+        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('${this._config.loading_image || ""}') center/cover no-repeat; z-index: 10; display: ${this._config.loading_image && this._initialLoad ? "block" : "none"}; pointer-events: none; }
       </style>
       <div class="loading-overlay" id="loader"></div>
       <div id="container"></div>
@@ -219,7 +264,7 @@ class HashTimerCard extends HTMLElement {
   _attachErrorListenerDeep(root) {
     if (!root) return;
 
-    root.addEventListener("error", this._onErrorCaptured, true);
+    root.addEventListener("error", this._onErrorCaptured, { capture: true, passive: true });
 
     root.querySelectorAll("*").forEach(el => {
       if (el.shadowRoot) {
@@ -283,10 +328,10 @@ class HashTimerCard extends HTMLElement {
    * @async
    * @returns {Promise<void>}
    */
-  async _render() {
-    const hash = window.location.hash.replace('#', '');
+  async _render(forcedName) {
+    const hash = window.location.hash.replace("#", "");
     const cardNames = Object.keys(this._config.cards);
-    const activeName = cardNames.includes(hash) ? hash : this._config.default;
+    const activeName = forcedName || (cardNames.includes(hash) ? hash : this._config.default);
 
     if (this._currentActive === activeName) return;
     this._currentActive = activeName;
@@ -331,7 +376,7 @@ class HashTimerCard extends HTMLElement {
       if (this._initialLoad) {
         setTimeout(() => {
           const loader = this.shadowRoot.querySelector("#loader");
-          if (loader) loader.style.display = 'none';
+          if (loader) loader.style.display = "none";
           this._initialLoad = false;
         }, this._config.loading_time);
       }
@@ -351,7 +396,7 @@ class HashTimerCard extends HTMLElement {
   /**
    * Checks whether the entity referenced in a card configuration is currently invalid.
    * An entity is considered invalid if it is absent from the HA state tree,
-   * or if its state is `'unavailable'` or `'unknown'`.
+   * or if its state is `"unavailable"` or `"unknown"`.
    *
    * @private
    * @param {Object} config          - The child card configuration object.
@@ -361,7 +406,7 @@ class HashTimerCard extends HTMLElement {
   _checkEntityInvalid(config) {
     if (!config.entity || !this._hass) return false;
     const state = this._hass.states[config.entity];
-    return !state || state.state === 'unavailable' || state.state === 'unknown';
+    return !state || state.state === "unavailable" || state.state === "unknown";
   }
 
   /**
@@ -401,6 +446,98 @@ class HashTimerCard extends HTMLElement {
       window.history.replaceState(null, null, `#${this._config.default}`);
       window.dispatchEvent(new Event("location-changed"));
     }, duration);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Trigger-entity evaluation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Centralises hash-based navigation so that every caller uses the same
+   * `replaceState` pattern.
+   * Also triggers `_render` immediately with the target card name so that
+   * rapid successive calls (e.g. two simultaneous trigger_entities firing)
+   * are never short-circuited by the async hash-listener path.
+   *
+   * @private
+   * @param {string}  name   - Name of the card to navigate to.
+   * @param {boolean} [silent=false] - When true, skips the `location-changed` dispatch.
+   *   Use this for trigger-driven navigation to avoid waking up other card instances
+   *   that listen on the same window event.
+   * @returns {void}
+   */
+  _navigateTo(name, silent = false) {
+    window.history.replaceState(null, null, `#${name}`);
+    if (!silent) window.dispatchEvent(new Event("location-changed"));
+    this._render(name);
+  }
+
+  /**
+   * Checks `trigger_entities` on every `hass` update and switches the displayed
+   * card when one or more trigger conditions become active or inactive.
+   *
+   * Resolution rules:
+   *  1. Collect every card whose `trigger_entities` list contains at least one
+   *     entity with a state that is neither `"off"`, `"unavailable"`, nor `"unknown"`.
+   *  2. Among those candidates, pick the first one that appears in
+   *     `trigger_priority` (if defined), then fall back to the first candidate
+   *     in declaration order.
+   *  3. If no candidate is found and a trigger was previously active, cancel the
+   *     trigger and return to the default card (respecting its timer if any).
+   *
+   * Navigation is skipped when the target is already displayed to avoid loops.
+   *
+   * @private
+   * @returns {void}
+   */
+  _evaluateTriggers() {
+    if (!this._config || !this._hass) return;
+
+    const triggerEntities = this._config.trigger_entities;
+    if (!triggerEntities || typeof triggerEntities !== "object") return;
+
+    // Build the set of cards whose trigger is currently active.
+    const activeCards = Object.keys(triggerEntities).filter(cardName => {
+      const entities = triggerEntities[cardName];
+      if (!Array.isArray(entities) || entities.length === 0) return false;
+      return entities.some(entityId => {
+        const state = this._hass.states[entityId];
+        return state && state.state !== "off" && state.state !== "unavailable" && state.state !== "unknown";
+      });
+    });
+
+    if (activeCards.length > 0) {
+      // Resolve priority: use trigger_priority order when provided.
+      const priority = this._config.trigger_priority;
+      let winner = null;
+      if (Array.isArray(priority)) {
+        winner = priority.find(name => activeCards.includes(name)) || activeCards[0];
+      } else {
+        winner = activeCards[0];
+      }
+
+      if (winner !== this._triggeredCard) {
+        this._triggeredCard = winner;
+        if (this._currentActive !== winner) {
+          this._navigateTo(winner, true);
+        }
+      }
+
+    } else if (this._triggeredCard !== null) {
+      // All triggers have gone inactive — return to default.
+      this._triggeredCard = null;
+      const defaultName = this._config.default;
+      if (this._currentActive !== defaultName) {
+        const timerDuration = this._config.timers && this._config.timers[defaultName];
+        if (timerDuration && timerDuration > 0) {
+          // Honour the default card's timer before switching back.
+          if (this._timer) clearTimeout(this._timer);
+          this._timer = setTimeout(() => this._navigateTo(defaultName, true), timerDuration);
+        } else {
+          this._navigateTo(defaultName, true);
+        }
+      }
+    }
   }
 }
 

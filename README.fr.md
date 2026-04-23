@@ -11,7 +11,7 @@
 Idéal pour créer des interfaces interactives type "tableaux de bord futuristes" sans multiplier les vues Home Assistant.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Arubinu/hash-timer-card)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/Arubinu/hash-timer-card)
 
 -----
 
@@ -73,6 +73,8 @@ homeassistant:
 | `loading_time` | number | Non | Durée (ms) d'affichage du loader (défaut: 1000). |
 | `error_fallback` | object | Non | Map pour rediriger vers une autre carte en cas d'erreur. |
 | `timers` | object | Non | Temps (ms) avant de revenir à la carte `default`. |
+| `trigger_entities` | object | Non | Dictionnaire d'entités. La carte s'affiche automatiquement si une entité est active. |
+| `trigger_priority` | array | Non | Liste de noms de cartes pour définir la priorité au déclenchement par `trigger_entities`. |
 
 > ⚠️ **Important :** Si vous utilisez plusieurs `hash-timer-card` sur le même tableau de bord, utilisez des noms de cartes **bien distincts** (ex: `#salon_cam` et `#cuisine_cam`) pour éviter que les cartes ne changent de vue simultanément \!
 
@@ -84,21 +86,23 @@ homeassistant:
 
 ```yaml
 type: custom:hash-timer-card
-default: info
+default: version
+loading_time: 1000
 cards:
-  info:
-    type: entity
-    entity: sun.sun
+  version:
+    type: markdown
+    content: >-
+      {{ states.update.home_assistant_core_update.attributes.installed_version }} ... Frappe-moi!
+    title: Version du Coeur
     tap_action:
       action: navigate
-      navigation_path: "#details"
-  details:
-    type: entities
-    entities:
-      - sun.sun
-      - sensor.outside_temp
+      navigation_path: "#bad-action"
+  bad-action:
+    type: markdown
+    content: Cette carte n'est pas censée être cliquable...
+    title: Attend attend attend!
 timers:
-  details: 5000 # Revient sur 'info' après 5 secondes
+  bad-action: 3000 # Revient sur 'version' après 3 secondes
 ```
 
 ### 2\. Exemple Avancé : Caméra Intelligente (Projet Réel)

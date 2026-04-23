@@ -11,7 +11,7 @@
 Perfect for creating interactive, "futuristic dashboard" style interfaces without multiplying your Home Assistant views.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Arubinu/hash-timer-card)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/Arubinu/hash-timer-card)
 
 -----
 
@@ -73,6 +73,8 @@ homeassistant:
 | `loading_time` | number | No | Duration (ms) the loader is displayed (default: 1000). |
 | `error_fallback` | object | No | Map to redirect to another card upon error. |
 | `timers` | object | No | Time (ms) before returning to the `default` card. |
+| `trigger_entities` | object | Non | Map of entity IDs. The card is automatically displayed if one of its entities is active.. |
+| `trigger_priority` | array | Non | List of map names to define priority for triggering by `trigger_entities`. |
 
 > ⚠️ **Important:** If you use multiple `hash-timer-card` instances on the same dashboard, use **distinct card names** (e.g., `#livingroom_cam` and `#kitchen_cam`) to prevent multiple cards from switching views simultaneously\!
 
@@ -84,21 +86,24 @@ homeassistant:
 
 ```yaml
 type: custom:hash-timer-card
-default: info
+default: version
+loading_time: 1000
 cards:
-  info:
-    type: entity
-    entity: sun.sun
+  version:
+    type: markdown
+    content: >-
+      {{ states.update.home_assistant_core_update.attributes.installed_version
+      }} ... Hit me!
+    title: Core Version
     tap_action:
       action: navigate
-      navigation_path: "#details"
-  details:
-    type: entities
-    entities:
-      - sun.sun
-      - sensor.outside_temp
+      navigation_path: "#bad-action"
+  bad-action:
+    type: markdown
+    content: This map is not meant to be clickable...
+    title: Wait wait wait!
 timers:
-  details: 5000 # Returns to 'info' after 5 seconds
+  bad-action: 3000 # Returns to 'version' after 3 seconds
 ```
 
 ### 2\. Advanced Example: Smart Camera (Real-World Project)
