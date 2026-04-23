@@ -2,5 +2,6 @@
   "name": "Hash Timer Card",
   "filename": "hash-timer-card.js",
   "render_readme": true,
+  "content_in_root": true,
   "homeassistant": "2026.4.3"
 }

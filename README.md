@@ -1,17 +1,18 @@
-# 🚀 Hash Timer Card
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Arubinu/hash-timer-card/main/resources/icon/icon@2x.png" width="400" alt="Hash Timer Card Logo">
+</p>
+
+![Version](https://img.shields.io/github/v/release/Arubinu/hash-timer-card?style=for-the-badge)
+![License](https://img.shields.io/github/license/Arubinu/hash-timer-card?style=for-the-badge)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 *__Read this in:__ English | [Français](README.fr.md)*
 
 ---
 
-[](https://github.com/hacs/integration)
-
 **Hash Timer Card** is a "meta" Lovelace card that acts as a smart router within a single view. It dynamically changes its content based on the URL `#hash`, handles resource errors (broken images/videos, unavailable entities), and can automatically return to a default state using a built-in timer.
 
 Perfect for creating interactive, "futuristic dashboard" style interfaces without multiplying your Home Assistant views.
-
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/Arubinu/hash-timer-card)
 
 -----
 
