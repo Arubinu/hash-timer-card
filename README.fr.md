@@ -6,15 +6,13 @@
 ![License](https://img.shields.io/github/license/Arubinu/hash-timer-card?style=for-the-badge)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-*__Read this in:__ [English](README.md) | Français*
+*__Read this in:__ [English](README.md) | Français | [Español](README.es.md) | [Deutsch](README.de.md) | [Nederlands](README.nl.md)*
 
 ---
 
 **Hash Timer Card** est une carte Lovelace "méta" qui agit comme un routeur intelligent au sein d'une même vue. Elle change de contenu dynamiquement en fonction du `#hash` dans l'URL, gère les erreurs de chargement (images/vidéos cassées, entités indisponibles) et permet de revenir automatiquement à un état par défaut grâce à un minuteur.
 
 Idéal pour créer des interfaces interactives type "tableaux de bord futuristes" sans multiplier les vues Home Assistant.
-
------
 
 ## ✨ Fonctionnalités Clés
 
@@ -23,12 +21,14 @@ Idéal pour créer des interfaces interactives type "tableaux de bord futuristes
   * **Auto-Return Timer** : Définissez un délai pour revenir à la carte par défaut (ex: quitter le mode "Live" après 60 secondes).
   * **Overlay de Chargement** : Affichez une image de transition élégante pendant le rendu initial.
   * **Navigation Fluide** : Utilise l'API History du navigateur pour une intégration parfaite.
+  * **Déclencheurs** : Change automatiquement de carte enfant lorsqu'une entité définie devient active.
+  * **Support Multilingue** : Éditeur visuel entièrement traduit en plusieurs langues pour une configuration simplifiée.
 
------
-
-## 🛠️ Installation
+## ⚙️ Installation
 
 ### Via HACS (recommandé)
+
+> Si vous n'avez pas HACS, suivez le guide officiel: https://hacs.xyz
 
 [![Ouvrir votre instance Home Assistant et afficher le dépôt dans HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Arubinu&repository=hash-timer-card&category=plugin)
 
@@ -58,9 +58,7 @@ homeassistant:
 
 *Note : Vos images placées dans `/config/www/images/` seront accessibles via l'URL `/local/images/`.*
 
------
-
-## 📖 Configuration
+## 🧩 Configuration
 
 ### Options de la carte
 
@@ -78,8 +76,6 @@ homeassistant:
 | `trigger_priority` | array | Non | Liste de noms de cartes pour définir la priorité au déclenchement par `trigger_entities`. |
 
 > ⚠️ **Important :** Si vous utilisez plusieurs `hash-timer-card` sur le même tableau de bord, utilisez des noms de cartes **bien distincts** (ex: `#salon_cam` et `#cuisine_cam`) pour éviter que les cartes ne changent de vue simultanément \!
-
------
 
 ## 💡 Exemples
 
@@ -100,8 +96,8 @@ cards:
       navigation_path: "#bad-action"
   bad-action:
     type: markdown
-    content: Cette carte n'est pas censée être cliquable...
     title: Attend attend attend!
+    content: Cette carte n'est pas censée être cliquable...
 timers:
   bad-action: 3000 # Revient sur 'version' après 3 secondes
 ```
@@ -214,6 +210,9 @@ cards:
       navigation_path: "#camera_live" # Pour retenter manuellement
 ```
 
------
+## 📄 Licence
 
-*License: MIT*
+Ce projet est distribué sous la licence **MIT**.
+<br>Vous pouvez l'utiliser, le modifier et le distribuer librement, tant que le copyright original est préservé.
+
+Consultez le fichier [LICENSE](LICENSE) pour plus de détails.

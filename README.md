@@ -6,15 +6,13 @@
 ![License](https://img.shields.io/github/license/Arubinu/hash-timer-card?style=for-the-badge)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-*__Read this in:__ English | [Français](README.fr.md)*
+*__Read this in:__ English | [Français](README.fr.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Nederlands](README.nl.md)*
 
 ---
 
 **Hash Timer Card** is a "meta" Lovelace card that acts as a smart router within a single view. It dynamically changes its content based on the URL `#hash`, handles resource errors (broken images/videos, unavailable entities), and can automatically return to a default state using a built-in timer.
 
 Perfect for creating interactive, "futuristic dashboard" style interfaces without multiplying your Home Assistant views.
-
------
 
 ## ✨ Key Features
 
@@ -23,12 +21,14 @@ Perfect for creating interactive, "futuristic dashboard" style interfaces withou
   * **Auto-Return Timer**: Set a countdown to return to the default card (e.g., exit "Live View" after 60 seconds).
   * **Loading Overlay**: Show a sleek transition image during the initial render.
   * **Seamless Navigation**: Uses the browser's History API for a native feel within Home Assistant.
+  * **Triggers**: Automatically switch to a specific child card when defined entities become active.
+  * **Localization Support**: Fully translatable visual editor, available in multiple languages for a native configuration experience.
 
------
-
-## 🛠️ Installation
+## ⚙️ Installation
 
 ### Via HACS (recommended)
+
+> If you don't have HACS, follow the official guide: https://hacs.xyz
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Arubinu&repository=hash-timer-card&category=plugin)
 
@@ -58,9 +58,7 @@ homeassistant:
 
 *Note: Images placed in `/config/www/images/` will be accessible via the URL `/local/images/`.*
 
------
-
-## 📖 Configuration
+## 🧩 Configuration
 
 ### Card Options
 
@@ -78,8 +76,6 @@ homeassistant:
 | `trigger_priority` | array | Non | List of map names to define priority for triggering by `trigger_entities`. |
 
 > ⚠️ **Important:** If you use multiple `hash-timer-card` instances on the same dashboard, use **distinct card names** (e.g., `#livingroom_cam` and `#kitchen_cam`) to prevent multiple cards from switching views simultaneously\!
-
------
 
 ## 💡 Examples
 
@@ -101,8 +97,8 @@ cards:
       navigation_path: "#bad-action"
   bad-action:
     type: markdown
-    content: This map is not meant to be clickable...
     title: Wait wait wait!
+    content: This map is not meant to be clickable...
 timers:
   bad-action: 3000 # Returns to 'version' after 3 seconds
 ```
@@ -215,6 +211,9 @@ cards:
       navigation_path: "#camera_live" # Manual retry
 ```
 
------
+## 📄 License
 
-*License: MIT*
+This project is distributed under the **MIT** license.
+<br>You may use, modify, and distribute it freely, as long as the original copyright is preserved.
+
+Read the [LICENSE](LICENSE) file for full details.

@@ -10,6 +10,119 @@
  * @license MIT
  */
 
+// ---------------------------------------------------------------------------
+// Translations — add a new language block to extend i18n support.
+// English is always the fallback when a key is missing in the active language.
+// ---------------------------------------------------------------------------
+
+const TRANSLATIONS = {
+  en: {
+    tab_general:          "GENERAL",
+    label_default_card:   "Default Card",
+    label_trigger_priority: "Trigger Priority",
+    label_hash_id:        "Hash ID",
+    label_auto_return:    "Auto-return (ms)",
+    label_fallback:       "Fallback",
+    label_trigger_entities: "Triggers",
+    label_child_card:     "Child Card",
+    btn_add_entity:       "Add an entity",
+    btn_delete_card:      "Delete the card",
+    no_card:              "No card available — choose one below.",
+    choose:               "-- Choose --",
+    none:                 "None",
+    edit_card:            "Edit the card",
+    delete_card:          "Delete the card",
+    opt_loading_time:     "Loading time (ms)",
+    opt_loading_image:    "Loading image (url)",
+    opt_background_image: "Background image (url)",
+    opt_aspect_ratio:     "Aspect Ratio (e.g., 16/9)",
+  },
+  fr: {
+    tab_general:          "GÉNÉRAL",
+    label_default_card:   "Carte par défaut",
+    label_trigger_priority: "Priorité des déclencheurs",
+    label_hash_id:        "ID de Hash",
+    label_auto_return:    "Retour auto (ms)",
+    label_fallback:       "Repli",
+    label_trigger_entities: "Déclencheurs",
+    label_child_card:     "Carte enfant",
+    btn_add_entity:       "Ajouter une entité",
+    btn_delete_card:      "Supprimer la carte",
+    no_card:              "Aucune carte — choisissez-en une ci-dessous.",
+    choose:               "-- Choisir --",
+    none:                 "Aucun",
+    edit_card:            "Modifier la carte",
+    delete_card:          "Supprimer la carte",
+    opt_loading_time:     "Temps de chargement (ms)",
+    opt_loading_image:    "Image de chargement (url)",
+    opt_background_image: "Image de fond (url)",
+    opt_aspect_ratio:     "Ratio d'aspect (ex : 16/9)",
+  },
+  de: {
+    tab_general:          "ALLGEMEIN",
+    label_default_card:   "Standardkarte",
+    label_trigger_priority: "Auslöser-Priorität",
+    label_hash_id:        "Hash-ID",
+    label_auto_return:    "Auto-Rückkehr (ms)",
+    label_fallback:       "Ausweich-Karte",
+    label_trigger_entities: "Auslöser",
+    label_child_card:     "Untergeordnete Karte",
+    btn_add_entity:       "Entität hinzufügen",
+    btn_delete_card:      "Karte löschen",
+    no_card:              "Keine Karte — wählen Sie eine unten aus.",
+    choose:               "-- Wählen --",
+    none:                 "Keine",
+    edit_card:            "Karte bearbeiten",
+    delete_card:          "Karte löschen",
+    opt_loading_time:     "Ladezeit (ms)",
+    opt_loading_image:    "Ladebild (URL)",
+    opt_background_image: "Hintergrundbild (URL)",
+    opt_aspect_ratio:     "Seitenverhältnis (z.B. 16/9)",
+  },
+  es: {
+    tab_general:          "GENERAL",
+    label_default_card:   "Tarjeta por defecto",
+    label_trigger_priority: "Prioridad de activadores",
+    label_hash_id:        "ID de hash",
+    label_auto_return:    "Retorno auto (ms)",
+    label_fallback:       "Alternativa",
+    label_trigger_entities: "Activadores",
+    label_child_card:     "Tarjeta hija",
+    btn_add_entity:       "Añadir entidad",
+    btn_delete_card:      "Eliminar tarjeta",
+    no_card:              "Sin tarjeta — elige una a continuación.",
+    choose:               "-- Elegir --",
+    none:                 "Ninguno",
+    edit_card:            "Editar tarjeta",
+    delete_card:          "Eliminar tarjeta",
+    opt_loading_time:     "Tiempo de carga (ms)",
+    opt_loading_image:    "Imagen de carga (url)",
+    opt_background_image: "Imagen de fondo (url)",
+    opt_aspect_ratio:     "Relación de aspecto (ej: 16/9)",
+  },
+  nl: {
+    tab_general:          "ALGEMEEN",
+    label_default_card:   "Standaardkaart",
+    label_trigger_priority: "Triggerprioriteit",
+    label_hash_id:        "Hash-ID",
+    label_auto_return:    "Auto-terugkeer (ms)",
+    label_fallback:       "Terugvalkaart",
+    label_trigger_entities: "Triggers",
+    label_child_card:     "Onderliggende kaart",
+    btn_add_entity:       "Entiteit toevoegen",
+    btn_delete_card:      "Kaart verwijderen",
+    no_card:              "Geen kaart — kies er hieronder een.",
+    choose:               "-- Kies --",
+    none:                 "Geen",
+    edit_card:            "Kaart bewerken",
+    delete_card:          "Kaart verwijderen",
+    opt_loading_time:     "Laadtijd (ms)",
+    opt_loading_image:    "Laadafbeelding (url)",
+    opt_background_image: "Achtergrondafbeelding (url)",
+    opt_aspect_ratio:     "Beeldverhouding (bijv. 16/9)",
+  },
+};
+
 class HashTimerCardEditor extends HTMLElement {
 
   // ---------------------------------------------------------------------------
@@ -44,6 +157,31 @@ class HashTimerCardEditor extends HTMLElement {
      * @type {Set<HTMLElement>}
      */
     this._activeDialogs = new Set();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Internationalisation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Returns the two-letter language code from hass, defaulting to "en".
+   *
+   * @private
+   * @returns {string}
+   */
+  get _lang() {
+    return this._hass?.language?.split("-")[0] || "en";
+  }
+
+  /**
+   * Translates a key using the active language, falling back to English.
+   *
+   * @private
+   * @param {string} key - A key from the TRANSLATIONS object.
+   * @returns {string}
+   */
+  _t(key) {
+    return (TRANSLATIONS[this._lang] ?? {})[key] ?? TRANSLATIONS.en[key] ?? key;
   }
 
   /**
@@ -111,10 +249,10 @@ class HashTimerCardEditor extends HTMLElement {
    */
   get _globalOptionalFields() {
     return [
-      { key: "loading_time",     label: "Loading time (ms)",         icon: "mdi:timer-sand"   },
-      { key: "loading_image",    label: "Loading image (url)",       icon: "mdi:image-sync"   },
-      { key: "background_image", label: "Background image (url)",    icon: "mdi:image-area"   },
-      { key: "aspect_ratio",     label: "Aspect Ratio (e.g., 16/9)", icon: "mdi:aspect-ratio" },
+      { key: "loading_time",     label: this._t("opt_loading_time"),     icon: "mdi:timer-sand"   },
+      { key: "loading_image",    label: this._t("opt_loading_image"),    icon: "mdi:image-sync"   },
+      { key: "background_image", label: this._t("opt_background_image"), icon: "mdi:image-area"   },
+      { key: "aspect_ratio",     label: this._t("opt_aspect_ratio"),     icon: "mdi:aspect-ratio" },
     ];
   }
 
@@ -146,7 +284,7 @@ class HashTimerCardEditor extends HTMLElement {
         .tab-item.active { border-bottom: 2px solid var(--primary-color); color: var(--primary-color); }
 
         /* Form fields — use HA native elements (ha-textfield, ha-select) for theme support */
-        .field { display: flex; flex-direction: column; margin-bottom: 8px; }
+        .field { display: flex; flex-direction: column; margin-top: 12px; margin-bottom: 8px; }
         .field label { font-size: 11px; color: var(--secondary-text-color); margin-bottom: 4px; font-weight: 500; text-transform: uppercase; }
         ha-textfield, ha-select { display: block; width: 100%; }
 
@@ -158,13 +296,13 @@ class HashTimerCardEditor extends HTMLElement {
         .btn-icon { cursor: pointer; color: var(--secondary-text-color); background: none; border: none; padding: 4px; display: flex; align-items: center; gap: 4px; font-family: inherit; font-size: 13px; }
         .btn-icon:hover { color: var(--primary-text-color); }
         .btn-delete { color: var(--error-color); }
-        .btn-add-entity { border: 1px dashed var(--divider-color); justify-content: center; padding: 8px; width: 100%; margin-top: 4px; border-radius: 4px; }
+        .btn-add-entity { border: 1px dashed var(--divider-color); justify-content: center; padding: 8px; width: 100%; border-radius: 4px; }
 
         /* Selected card row — no border, no background, flush */
-        .card-row { display: flex; align-items: center; padding: 4px 0; margin-bottom: 4px; }
-        .card-editor-label { font-size: 11px; color: var(--secondary-text-color); text-transform: uppercase; font-weight: 500; margin-bottom: 6px; }
+        .card-row { display: flex; align-items: center; padding: 4px 0; margin-bottom: 4px; border: 1px solid var(--divider-color); border-radius: 4px; }
+        .card-editor-label { font-size: 11px; color: var(--secondary-text-color); text-transform: uppercase; font-weight: 500; margin-bottom: 4px; }
         .card-info { flex-grow: 1; display: flex; align-items: center; gap: 8px; overflow: hidden; }
-        .card-type { font-size: 14px; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-type { font-size: 14px; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 14px; }
         .card-name { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-actions { display: flex; align-items: center; flex-shrink: 0; }
         .card-actions ha-icon-button { --mdc-icon-button-size: 36px; color: var(--secondary-text-color); }
@@ -178,7 +316,7 @@ class HashTimerCardEditor extends HTMLElement {
         /* Card editor slot — no border, no background: flush with the rest */
         .card-editor-slot { display: block; margin-top: 12px; }
 
-        .bottom-actions { display: flex; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--divider-color); padding-top: 15px; }
+        .bottom-actions { display: flex; justify-content: flex-end; margin-top: 12px; border-top: 1px solid var(--divider-color); padding-top: 12px; }
 
         /* Dropdown menu */
         .dropdown { position: relative; }
@@ -193,7 +331,7 @@ class HashTimerCardEditor extends HTMLElement {
         <!-- Tab bar -->
         <div class="tabs-container">
           <div class="tabs-bar">
-            <div class="tab-item ${this._selectedTab === 0 ? "active" : ""}" data-idx="0">GENERAL</div>
+            <div class="tab-item ${this._selectedTab === 0 ? "active" : ""}" data-idx="0">${this._t("tab_general")}</div>
             ${hashes.map((h, i) => `
               <div class="tab-item ${this._selectedTab === i + 1 ? "active" : ""}" data-idx="${i + 1}">${h}</div>
             `).join("")}
@@ -249,7 +387,6 @@ class HashTimerCardEditor extends HTMLElement {
 
     return `
       <div class="field">
-        <label>Default Card</label>
         <div id="default-select-slot"></div>
       </div>
       ${this._globalOptionalFields
@@ -261,8 +398,8 @@ class HashTimerCardEditor extends HTMLElement {
           </div>
         `).join("")}
       ${triggerHashes.length > 1 ? `
-        <div class="field" style="margin-top:12px;">
-          <label>Trigger Priority</label>
+        <div class="field">
+          <label>${this._t("label_trigger_priority")}</label>
           <div id="trigger-priority-list">
             ${priority.map((h, i) => `
               <div class="input-row" data-priority-row="${i}">
@@ -304,18 +441,18 @@ class HashTimerCardEditor extends HTMLElement {
     return `
       <!-- Hash identifier -->
       <div style="margin-bottom:8px;">
-        <ha-textfield label="Hash Identifier" type="text" value="${hash}" data-old-hash="${hash}" class="hash-rename-input" style="width:100%;"></ha-textfield>
+        <ha-textfield label="${this._t("label_hash_id")}" type="text" value="${hash}" data-old-hash="${hash}" class="hash-rename-input" style="width:100%;"></ha-textfield>
       </div>
 
       <!-- Timer + Fallback -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
-        <ha-textfield label="Auto-return (ms)" type="number" data-timer-hash="${hash}" value="${this._config.timers[hash] || ""}" style="width:100%;"></ha-textfield>
+        <ha-textfield label="${this._t("label_auto_return")}" type="number" data-timer-hash="${hash}" value="${this._config.timers[hash] || ""}" style="width:100%;"></ha-textfield>
         <div id="fallback-select-slot"></div>
       </div>
 
       <!-- Trigger entities -->
-      <div class="field" style="margin-top:10px;">
-        <label>Trigger Entities</label>
+      <div class="field">
+        <label>${this._t("label_trigger_entities")}</label>
         <div id="entity-pickers-container">
           ${triggerList.map((_, i) => `
             <div class="entity-row" data-entity-row="${i}">
@@ -327,13 +464,13 @@ class HashTimerCardEditor extends HTMLElement {
           `).join("")}
         </div>
         <button class="btn-icon btn-add-entity" id="add-ent-btn">
-          <ha-icon icon="mdi:plus"></ha-icon> Add an entity
+          <ha-icon icon="mdi:plus"></ha-icon> ${this._t("btn_add_entity")}
         </button>
       </div>
 
       <!-- Card selection -->
       <div class="card-editor-slot">
-        <div class="card-editor-label">Child Card</div>
+        <div class="card-editor-label">${this._t("label_child_card")}</div>
         ${hasCard ? `
           <div class="card-row">
             <div class="card-info">
@@ -343,19 +480,19 @@ class HashTimerCardEditor extends HTMLElement {
             <div class="card-actions">
               <ha-icon-button
                 id="btn-edit-card"
-                label="Edit the card"
+                label="${this._t("edit_card")}"
                 path="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"
               ></ha-icon-button>
               <ha-icon-button
                 id="btn-remove-card"
-                label="Delete the card"
+                label="${this._t("delete_card")}"
                 path="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
                 style="color: var(--error-color);"
               ></ha-icon-button>
             </div>
           </div>
         ` : `
-          <div class="no-card">No card available — choose one below.</div>
+          <div class="no-card">${this._t("no_card")}</div>
           <div id="card-picker-slot"></div>
         `}
       </div>
@@ -363,7 +500,7 @@ class HashTimerCardEditor extends HTMLElement {
       <!-- Delete this hash tab -->
       <div class="bottom-actions">
         <button class="btn-icon btn-delete" data-del-card="${hash}">
-          <ha-icon icon="mdi:trash-can-outline"></ha-icon> Delete the card
+          <ha-icon icon="mdi:trash-can-outline"></ha-icon> ${this._t("btn_delete_card")}
         </button>
       </div>
     `;
@@ -392,13 +529,13 @@ class HashTimerCardEditor extends HTMLElement {
       if (defaultSlot) {
         const hashes = Object.keys(this._config.cards);
         const sel = document.createElement("ha-select");
-        sel.label = "Default Card";
+        sel.label = this._t("label_default_card");
         sel.value = this._config.default || "";
         sel.style.width = "100%";
 
         const noneItem = document.createElement("mwc-list-item");
         noneItem.value = "";
-        noneItem.textContent = "-- Choose --";
+        noneItem.textContent = this._t("choose");
         sel.appendChild(noneItem);
 
         hashes.forEach(h => {
@@ -443,13 +580,13 @@ class HashTimerCardEditor extends HTMLElement {
     const fallbackSlot = this.shadowRoot.querySelector("#fallback-select-slot");
     if (fallbackSlot) {
       const sel = document.createElement("ha-select");
-      sel.label   = "Fallback";
+      sel.label   = this._t("label_fallback");
       sel.value   = this._config.error_fallback[hash] || "";
       sel.style.width = "100%";
 
       const noneItem = document.createElement("mwc-list-item");
       noneItem.value = "";
-      noneItem.textContent = "None";
+      noneItem.textContent = this._t("none");
       sel.appendChild(noneItem);
 
       fallbacks.forEach(f => {
