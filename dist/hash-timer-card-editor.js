@@ -6,7 +6,7 @@
  *   hui-dialog-edit-card modal — the same mechanism used by actions-card.
  *
  * @author  Alvin Pergens
- * @version 1.0.0
+ * @version 1.2.1
  * @license MIT
  */
 
@@ -524,36 +524,29 @@ class HashTimerCardEditor extends HTMLElement {
 
     // ── General tab ──────────────────────────────────────────────────────────
     if (this._selectedTab === 0) {
-      // Mount native ha-select for the default card picker.
+      // Mount ha-form with selector:select for the default card picker.
       const defaultSlot = this.shadowRoot.querySelector("#default-select-slot");
       if (defaultSlot) {
         const hashes = Object.keys(this._config.cards);
-        const sel = document.createElement("ha-select");
-        sel.label = this._t("label_default_card");
-        sel.value = this._config.default || "";
-        sel.style.width = "100%";
-
-        const noneItem = document.createElement("mwc-list-item");
-        noneItem.value = "";
-        noneItem.textContent = this._t("choose");
-        sel.appendChild(noneItem);
-
-        hashes.forEach(h => {
-          const item = document.createElement("mwc-list-item");
-          item.value = h;
-          item.textContent = h;
-          sel.appendChild(item);
-        });
-
-        sel.addEventListener("selected", (ev) => {
+        const options = [
+          { value: "", label: this._t("choose") },
+          ...hashes.map(h => ({ value: h, label: h })),
+        ];
+        const form = document.createElement("ha-form");
+        form.hass   = this._hass;
+        form.schema = [{ name: "default", selector: { select: { mode: "dropdown", options } } }];
+        form.data   = { default: this._config.default || "" };
+        form.computeLabel = () => this._t("label_default_card");
+        form.addEventListener("value-changed", (ev) => {
           ev.stopPropagation();
-          const val = sel.value;
-          if (val) this._config.default = val;
-          this._valueChanged();
+          const val = ev.detail.value?.default;
+          if (val !== undefined) {
+            if (val) this._config.default = val;
+            else delete this._config.default;
+            this._valueChanged();
+          }
         });
-        sel.addEventListener("closed", (ev) => ev.stopPropagation());
-
-        defaultSlot.appendChild(sel);
+        defaultSlot.appendChild(form);
       }
       return;
     }
@@ -574,40 +567,30 @@ class HashTimerCardEditor extends HTMLElement {
       slot.appendChild(picker);
     });
 
-    // 2. Mount ha-select + mwc-list-item for the fallback dropdown.
-    // ha-select must be created imperatively — innerHTML cannot set .value on LitElement.
+    // 2. Mount ha-form with selector:select for the fallback dropdown.
     const fallbacks = Object.keys(this._config.cards).filter(h => h !== hash);
     const fallbackSlot = this.shadowRoot.querySelector("#fallback-select-slot");
     if (fallbackSlot) {
-      const sel = document.createElement("ha-select");
-      sel.label   = this._t("label_fallback");
-      sel.value   = this._config.error_fallback[hash] || "";
-      sel.style.width = "100%";
-
-      const noneItem = document.createElement("mwc-list-item");
-      noneItem.value = "";
-      noneItem.textContent = this._t("none");
-      sel.appendChild(noneItem);
-
-      fallbacks.forEach(f => {
-        const item = document.createElement("mwc-list-item");
-        item.value = f;
-        item.textContent = f;
-        sel.appendChild(item);
-      });
-
-      sel.addEventListener("selected", (ev) => {
+      const options = [
+        { value: "", label: this._t("none") },
+        ...fallbacks.map(f => ({ value: f, label: f })),
+      ];
+      const form = document.createElement("ha-form");
+      form.hass   = this._hass;
+      form.schema = [{ name: "fallback", selector: { select: { mode: "dropdown", options } } }];
+      form.data   = { fallback: this._config.error_fallback[hash] || "" };
+      form.computeLabel = () => this._t("label_fallback");
+      form.style.width = "100%";
+      form.addEventListener("value-changed", (ev) => {
         ev.stopPropagation();
-        const val = sel.value;
-        if (val) this._config.error_fallback[hash] = val;
-        else delete this._config.error_fallback[hash];
-        this._valueChanged();
+        const val = ev.detail.value?.fallback;
+        if (val !== undefined) {
+          if (val) this._config.error_fallback[hash] = val;
+          else delete this._config.error_fallback[hash];
+          this._valueChanged();
+        }
       });
-
-      // ha-select also fires "closed" on dropdown close — stop it bubbling up.
-      sel.addEventListener("closed", (ev) => ev.stopPropagation());
-
-      fallbackSlot.appendChild(sel);
+      fallbackSlot.appendChild(form);
     }
 
     // 3. Mount hui-card-picker if no card is configured yet.

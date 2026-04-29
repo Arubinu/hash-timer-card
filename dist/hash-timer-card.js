@@ -5,7 +5,7 @@
  *   with resource error detection, configurable fallback routing, and an auto-return timer.
  *
  * @author  Alvin Pergens
- * @version 1.1.0
+ * @version 1.2.1
  * @license MIT
  *
  * @example
